@@ -18,7 +18,7 @@ function initializeSurveys() {
     preSurveyForm.addEventListener('submit', handlePreSurveySubmit);
 
     // Progress tracking
-    trackSurveyProgress('pre-survey-form', 'pre-survey-progress', 'answered-count', 44);
+    trackSurveyProgress('pre-survey-form', 'pre-survey-progress', 'answered-count', 45);
 
     // Ethnicity validation removed - all fields now optional
   }
@@ -38,7 +38,7 @@ function initializeSurveys() {
     }
     
     // Progress tracking
-    trackSurveyProgress('post-survey-form', 'post-survey-progress', 'post-answered-count', 51);
+    trackSurveyProgress('post-survey-form', 'post-survey-progress', 'post-answered-count', 53);
   }
 }
 
@@ -189,7 +189,7 @@ function handlePreSurveySubmit(e) {
     data.self_efficacy[`q${i}`] = parseInt(formData.get(`q${i}`));
   }
   
-  for (let i = 31; i <= 44; i++) {
+  for (let i = 31; i <= 45; i++) {
     data.post_traumatic_growth[`q${i}`] = parseInt(formData.get(`q${i}`));
   }
   
@@ -223,7 +223,7 @@ async function handlePostSurveySubmit(e) {
     feedback: ''
   };
 
-  // Process Likert scale questions (Q1-Q50)
+  // Process Likert scale questions (Q1-Q52)
   // Q1-Q8: Life Satisfaction
   for (let i = 1; i <= 8; i++) {
     data.life_satisfaction[`q${i}`] = parseInt(formData.get(`q${i}`));
@@ -234,18 +234,18 @@ async function handlePostSurveySubmit(e) {
     data.self_efficacy[`q${i}`] = parseInt(formData.get(`q${i}`));
   }
 
-  // Q23-Q35: Post-Traumatic Growth
-  for (let i = 23; i <= 35; i++) {
+  // Q23-Q36: Post-Traumatic Growth
+  for (let i = 23; i <= 36; i++) {
     data.post_traumatic_growth[`q${i}`] = parseInt(formData.get(`q${i}`));
   }
 
-  // Q36-Q50: Learning Engagement
-  for (let i = 36; i <= 50; i++) {
+  // Q37-Q52: Learning Engagement
+  for (let i = 37; i <= 52; i++) {
     data.learning_engagement[`q${i}`] = parseInt(formData.get(`q${i}`));
   }
 
-  // Q51: Open-ended feedback
-  data.feedback = formData.get('q51') || '';
+  // Q53: Open-ended feedback
+  data.feedback = formData.get('q53') || '';
 
   // Store data
   surveyData.postSurvey = data;
@@ -286,7 +286,7 @@ function showNotification(message, type = 'info') {
 
 // Send data to Google Sheets
 async function sendToGoogleSheets() {
-  // Flatten all data into a single object
+  // Flatten all data into a single object matching the GAS specification
   const preSurvey = surveyData.preSurvey;
   const gamePlay = surveyData.gamePlay;
   const postSurvey = surveyData.postSurvey;
@@ -311,11 +311,12 @@ async function sendToGoogleSheets() {
     parental_status: preSurvey.demographics?.parental_status,
   };
 
-  // Pre-Survey Q10-Q44
-  for (let i = 10; i <= 44; i++) {
-    flatData[`pre_q${i}`] = preSurvey.life_satisfaction?.[`q${i}`] ||
-                            preSurvey.self_efficacy?.[`q${i}`] ||
-                            preSurvey.post_traumatic_growth?.[`q${i}`] || '';
+  // Pre-Survey Q10-Q45
+  for (let i = 10; i <= 45; i++) {
+    const qKey = `q${i}`;
+    flatData[`pre_q${i}`] = preSurvey.life_satisfaction?.[qKey] ||
+                            preSurvey.self_efficacy?.[qKey] ||
+                            preSurvey.post_traumatic_growth?.[qKey] || '';
   }
 
   // Stage 1
@@ -335,22 +336,19 @@ async function sendToGoogleSheets() {
   flatData.stage3_lost_count = gamePlay.stage3?.lostCards?.length || 0;
   flatData.stage3_rolls_json = JSON.stringify(gamePlay.stage3?.rolls || []);
 
-  // Post-Survey Q1-Q50
-  for (let i = 1; i <= 50; i++) {
-    flatData[`post_q${i}`] = postSurvey.life_satisfaction?.[`q${i}`] ||
-                             postSurvey.self_efficacy?.[`q${i}`] ||
-                             postSurvey.post_traumatic_growth?.[`q${i}`] ||
-                             postSurvey.learning_engagement?.[`q${i}`] || '';
+  // Post-Survey Q1-Q52
+  for (let i = 1; i <= 52; i++) {
+    const qKey = `q${i}`;
+    flatData[`post_q${i}`] = postSurvey.life_satisfaction?.[qKey] ||
+                             postSurvey.self_efficacy?.[qKey] ||
+                             postSurvey.post_traumatic_growth?.[qKey] ||
+                             postSurvey.learning_engagement?.[qKey] || '';
   }
 
-  // Post-Survey Q51: Open-ended feedback
-  flatData.post_q51 = postSurvey.feedback || '';
+  // Post-Survey Q53 (Open-ended feedback)
+  flatData.post_q53 = postSurvey.feedback || '';
 
-  // Debug: Log Q51 data
-  console.log('Q51 feedback data:', postSurvey.feedback);
-  console.log('post_q51 in flatData:', flatData.post_q51);
-
-  // Interim Message (last field in spreadsheet)
+  // Interim Message
   flatData.interim_message = gamePlay.interimMessage || '';
 
   // Send to Google Sheets
@@ -358,17 +356,20 @@ async function sendToGoogleSheets() {
     console.log('Sending data to Google Sheets:', flatData);
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      mode: 'no-cors', 
+      cache: 'no-cache',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain;charset=utf-8',
       },
-      body: JSON.stringify(flatData)
+      body: JSON.stringify(flatData),
+      redirect: 'follow'
     });
 
-    console.log('Data sent to Google Sheets successfully');
+    console.log('Data sent to Google Sheets. The request was made, but the response is opaque due to no-cors mode.');
     return true;
   } catch (error) {
     console.error('Error sending data to Google Sheets:', error);
+    console.log('Failed data:', JSON.stringify(flatData));
     return false;
   }
 }
