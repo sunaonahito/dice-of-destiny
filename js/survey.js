@@ -1,7 +1,7 @@
 // survey.js
 
 // Google Apps Script URL (replace with your deployed URL)
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzG0x6i4XiOrqzp-hzUD_v7srhmc5MuY8nQgug27YoWQ0A4k1dejFfRtm62GBnJpnFXgg/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmFGQAd65GbEFia0zfyLxG2FKDn9KE2NeQAN1U-1YJzZ7QExbGh6LehdnKe-pOfVob/exec';
 
 // Store survey data
 let surveyData = {
